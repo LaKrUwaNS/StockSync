@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Theme system for light/dark modes */
+
+nav::-webkit-scrollbar {
+  display: none; 
+}
+
+nav {
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+div::-webkit-scrollbar {
+  display: none; 
+}
+
+div {
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ============================================
+   LIGHT THEME (Default)
+   - Background: white / light gray
+   - Text: dark gray / near black
+   - Borders: subtle, low contrast
+   - Clean, readable appearance
+   ============================================ */
+:root {
+  --radius: 0.625rem;
+  
+  /* Core colors */
+  --background: hsl(0 0% 100%);           /* Pure white */
+  --foreground: hsl(220 15% 15%);          /* Near black */
+  
+  /* Card surfaces */
+  --card: hsl(0 0% 100%);                  /* White */
+  --card-foreground: hsl(220 15% 15%);     /* Near black */
+  
+  /* Popover/Dropdown */
+  --popover: hsl(0 0% 100%);               /* White */
+  --popover-foreground: hsl(220 15% 15%);  /* Near black */
+  
+  /* Primary action */
+  --primary: hsl(220 15% 20%);             /* Dark gray */
+  --primary-foreground: hsl(0 0% 98%);     /* Off-white */
+  
+  /* Secondary elements */
+  --secondary: hsl(220 10% 96%);           /* Light gray */
+  --secondary-foreground: hsl(220 15% 20%); /* Dark gray */
+  
+  /* Muted/subdued elements */
+  --muted: hsl(220 10% 96%);               /* Light gray */
+  --muted-foreground: hsl(220 10% 45%);    /* Medium gray */
+  
+  /* Accent - muted tone */
+  --accent: hsl(220 10% 94%);              /* Subtle light gray */
+  --accent-foreground: hsl(220 15% 20%);   /* Dark gray */
+  
+  /* Destructive/error */
+  --destructive: hsl(0 72% 51%);           /* Red */
+  
+  /* Borders and inputs */
+  --border: hsl(220 10% 90%);              /* Subtle border */
+  --input: hsl(220 10% 90%);               /* Input border */
+  --ring: hsl(220 10% 70%);                /* Focus ring */
+  
+  /* Chart colors */
+  --chart-1: hsl(25 95% 53%);              /* Orange */
+  --chart-2: hsl(173 58% 39%);             /* Teal */
+  --chart-3: hsl(220 70% 50%);             /* Blue */
+  --chart-4: hsl(43 96% 56%);              /* Yellow */
+  --chart-5: hsl(27 87% 67%);              /* Light orange */
+  
+  /* Sidebar */
+  --sidebar: hsl(0 0% 99%);                /* Near white */
+  --sidebar-foreground: hsl(220 15% 15%);  /* Near black */
+  --sidebar-primary: hsl(220 15% 20%);     /* Dark gray */
+  --sidebar-primary-foreground: hsl(0 0% 98%); /* Off-white */
+  --sidebar-accent: hsl(220 10% 94%);      /* Subtle gray */
+  --sidebar-accent-foreground: hsl(220 15% 20%); /* Dark gray */
+  --sidebar-border: hsl(220 10% 90%);      /* Subtle border */
+  --sidebar-ring: hsl(220 10% 70%);        /* Focus ring */
+}
+
+/* ============================================
+   DARK THEME - Discord Style
+   - Background: #313338 (main), #2b2d31 (secondary), #1e1f22 (darker)
+   - Accent: #5865F2 (blurple)
+   - Text: #ffffff, #b5bac1, #949ba4
+   ============================================ */
+.dark {
+  --radius: 0.5rem;
+
+  /* Core colors - Discord Dark Theme */
+  --background: #12181c;                   /* Darker main background */
+  --foreground: #f2f3f5;                   /* Primary text */
+  
+  /* Card surfaces */
+  --card: #171f26;                         /* Dark card surface */
+  --card-foreground: #f2f3f5;              /* Primary text */
+  
+  /* Popover/Dropdown */
+  --popover: #171f26;                      /* Floating elements */
+  --popover-foreground: #f2f3f5;           /* Primary text */
+  
+  /* Primary action - Discord Blurple (use sparingly) */
+  --primary: #5865f2;                      /* Discord blurple */
+  --primary-foreground: #ffffff;           /* White */
+  
+  /* Secondary elements */
+  --secondary: #1f2a36;                    /* Dark elevated surface */
+  --secondary-foreground: #f2f3f5;         /* Primary text */
+  
+  /* Muted/subdued elements */
+  --muted: #19222c;                        /* Background modifier */
+  --muted-foreground: #b5bac1;             /* Secondary text */
+  
+  /* Accent surfaces (hover/selected) */
+  --accent: #223042;                       /* hover/selected */
+  --accent-foreground: #f2f3f5;            /* text */
+  
+  /* Destructive/error - Discord Red */
+  --destructive: #ed4245;                  /* Discord red */
+  
+  /* Borders and inputs */
+  --border: #2a3440;                       /* low-contrast divider */
+  --input: #0f1419;                        /* input background */
+  --ring: #5865f2;                         /* Focus ring - blurple */
+  
+  /* Chart colors - Discord style */
+  --chart-1: #8a94ff;                      /* Softer blurple */
+  --chart-2: #57f287;                      /* Green */
+  --chart-3: #f6c177;                      /* Warm amber */
+  --chart-4: #eb459e;                      /* Fuchsia */
+  --chart-5: #ed4245;                      /* Red */
+  
+  /* Sidebar - Discord style */
+  --sidebar: #0f1419;                      /* left sidebar (darker) */
+  --sidebar-foreground: #f2f3f5;           /* Primary text */
+  --sidebar-primary: #5865f2;              /* Blurple */
+  --sidebar-primary-foreground: #ffffff;   /* White */
+  --sidebar-accent: #2b2d31;               /* selected/hover */
+  --sidebar-accent-foreground: #f2f3f5;    /* Primary text */
+  --sidebar-border: #2a3440;               /* Border */
+  --sidebar-ring: #5865f2;                 /* Blurple */
+}
+
+/* =====================================================
+   Desktop-app feel for protected routes
+   - Full-height panels
+   - No centered website containers
+   - Subtle, flat surfaces (no big shadows)
+   - Disable gradients to match Discord feel
+   ===================================================== */
+
+.app-shell .max-w-7xl,
+.app-shell .max-w-6xl,
+.app-shell .max-w-5xl,
+.app-shell .max-w-4xl {
+  max-width: none !important;
+}
+
+.app-shell .mx-auto {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.app-shell .shadow,
+.app-shell .shadow-sm,
+.app-shell .shadow-md,
+.app-shell .shadow-lg,
+.app-shell .shadow-xl,
+.app-shell .shadow-2xl {
+  box-shadow: none !important;
+}
+
+/* Purple gradient accent for titles across protected pages */
+.app-shell h1 {
+  background-image: linear-gradient(90deg, var(--primary), var(--chart-1));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-200;
+  }
+}

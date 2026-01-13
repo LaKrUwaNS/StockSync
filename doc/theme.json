@@ -1,0 +1,58 @@
+{
+  "navbar": {
+    "light": {
+      "background": "white/95",
+      "text": "gray-900",
+      "border": "gray-200",
+      "shadow": "shadow-2xl shadow-pink-500/5",
+      "backdrop": "blur"
+    },
+    "dark": {
+      "background": "gray-950/95",
+      "text": "gray-100",
+      "border": "gray-800",
+      "shadow": "shadow-2xl shadow-purple-900/20",
+      "backdrop": "blur"
+    }
+  },
+  "logo": {
+    "light": { "text": "gray-900" },
+    "dark": { "text": "white" }
+  },
+  "item": {
+    "light": {
+      "text": "gray-700",
+      "hoverBackground": "gray-100",
+      "activeBackground": "gradient-to-r from-pink-500 to-purple-600",
+      "activeText": "white",
+      "activeShadow": "shadow-lg shadow-pink-500/30"
+    },
+    "dark": {
+      "text": "gray-200",
+      "hoverBackground": "gray-900",
+      "activeBackground": "gradient-to-r from-pink-500 to-purple-600",
+      "activeText": "white",
+      "activeShadow": "shadow-lg shadow-pink-500/30"
+    }
+  },
+  "icon": {
+    "light": { "default": "gray-700", "active": "white" },
+    "dark": { "default": "gray-200", "active": "white" }
+  },
+  "childItem": {
+    "light": {
+      "text": "gray-700",
+      "hoverBackground": "gray-100",
+      "activeBackground": "gradient-to-r from-pink-500 to-purple-600",
+      "activeText": "white",
+      "activeShadow": "shadow-lg shadow-pink-500/30"
+    },
+    "dark": {
+      "text": "gray-200",
+      "hoverBackground": "gray-900",
+      "activeBackground": "gradient-to-r from-pink-500 to-purple-600",
+      "activeText": "white",
+      "activeShadow": "shadow-lg shadow-pink-500/30"
+    }
+  }
+}
