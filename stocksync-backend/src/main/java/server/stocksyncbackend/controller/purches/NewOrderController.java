@@ -23,7 +23,7 @@ import java.util.List;
         name = "Purchase Orders",
         description = "APIs for managing purchase orders, suppliers, and warehouses"
 )
-public class PurchaseOrderController {
+public class NewOrderController {
 
     private final NewPurchaseOrderService purchaseOrderService;
 

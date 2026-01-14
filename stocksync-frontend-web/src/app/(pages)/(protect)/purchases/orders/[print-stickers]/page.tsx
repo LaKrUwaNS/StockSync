@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import api from '@/lib/axios';
+import BackButton from '@/components/BakcButton';
 
 /* =====================
    Backend DTO Mapping
@@ -16,13 +17,18 @@ interface StickerData {
     receivedDate: string;
 }
 
-const toText = (value: unknown): string => {
-    if (value === null || value === undefined) return '';
-    return typeof value === 'string' ? value : String(value);
-};
+interface StickerDataDto {
+    poId?: unknown;
+    supplierName?: unknown;
+    warehouse?: unknown;
+    receivedDate?: unknown;
+}
+
+const toText = (value: unknown): string =>
+    value === null || value === undefined ? '' : String(value);
 
 const toNumber = (value: unknown, fallback = 0): number => {
-    const n = typeof value === 'number' ? value : Number(value);
+    const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
 };
 
@@ -45,43 +51,30 @@ export default function PrintStickersPage() {
 
         const ids = idsParam
             .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .map(Number)
+            .map((id) => Number(id.trim()))
             .filter(Number.isFinite);
 
-        if (ids.length === 0) {
+        if (!ids.length) {
             setLoading(false);
             return;
         }
 
-        const loadStickerData = async () => {
+        const load = async () => {
             try {
-                setError(null);
                 setLoading(true);
-
-                const response = await api.post(
+                const res = await api.post<StickerDataDto[]>(
                     '/api/purchase-orders/stickers',
                     ids
                 );
 
-                const raw: unknown[] = Array.isArray(response.data)
-                    ? (response.data as unknown[])
-                    : [];
-
-                const normalized: StickerData[] = raw.map((rawItem) => {
-                    const item =
-                        rawItem && typeof rawItem === 'object'
-                            ? (rawItem as Record<string, unknown>)
-                            : ({} as Record<string, unknown>);
-
-                    return {
+                const normalized: StickerData[] = (res.data ?? []).map(
+                    (item: StickerDataDto) => ({
                         poId: toNumber(item.poId),
                         supplierName: toText(item.supplierName),
                         warehouse: toText(item.warehouse),
                         receivedDate: toText(item.receivedDate)
-                    };
-                });
+                    })
+                );
 
                 setStickers(normalized);
             } catch {
@@ -91,14 +84,14 @@ export default function PrintStickersPage() {
             }
         };
 
-        loadStickerData();
+        load();
     }, [idsParam]);
 
     /* =====================
        Generate PDF
     ===================== */
     const generatePDF = async () => {
-        if (stickers.length === 0) return;
+        if (!stickers.length) return;
 
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -108,80 +101,60 @@ export default function PrintStickersPage() {
 
         for (let i = 0; i < stickers.length; i++) {
             if (i > 0) pdf.addPage();
-
             const s = stickers[i];
 
-            /* ===== Border ===== */
-            pdf.setDrawColor(0);
-            pdf.setLineWidth(0.7);
-            pdf.rect(4, 4, 97, 140);
+            pdf.setLineWidth(0.6);
+            pdf.roundedRect(4, 4, 97, 140, 4, 4);
 
-            /* ===== Header ===== */
-            pdf.setFillColor('#000000');
-            pdf.rect(4, 4, 97, 18, 'S');
+            pdf.setFillColor(20, 20, 20);
+            pdf.roundedRect(4, 4, 97, 22, 4, 4, 'F');
 
             pdf.setTextColor(255);
             pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(14);
-            pdf.text('STOCKSYNC', 10, 15);
+            pdf.setFontSize(15);
+            pdf.text('STOCKSYNC', 10, 16);
 
             pdf.setFontSize(8);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text('ENTERPRISE INVENTORY SYSTEM', 10, 20);
-
+            pdf.text('INVENTORY MANAGEMENT', 10, 21);
             pdf.setTextColor(0);
 
-            /* ===== Title ===== */
             pdf.setFontSize(11);
+            pdf.text('GOODS RECEIVED NOTE', 10, 34);
+            pdf.line(10, 36, 90, 36);
+
+            pdf.roundedRect(8, 40, 85, 45, 3, 3);
+
+            pdf.setFontSize(9);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('GOODS RECEIVED NOTE (GRN)', 10, 30);
-            pdf.line(10, 32, 90, 32);
-
-            /* ===== Details ===== */
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-
-            pdf.text('PO ID', 10, 42);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(toText(s.poId), 45, 42);
+            pdf.text('PO ID', 12, 48);
+            pdf.text('SUPPLIER', 12, 56);
+            pdf.text('WAREHOUSE', 12, 64);
+            pdf.text('RECEIVED', 12, 72);
 
             pdf.setFont('helvetica', 'normal');
-            pdf.text('Supplier', 10, 52);
-            pdf.text(toText(s.supplierName), 45, 52, { maxWidth: 52 });
+            pdf.text(toText(s.poId), 45, 48);
+            pdf.text(s.supplierName, 45, 56, { maxWidth: 40 });
+            pdf.text(s.warehouse, 45, 64, { maxWidth: 40 });
+            pdf.text(s.receivedDate, 45, 72);
 
-            pdf.text('Warehouse', 10, 62);
-            pdf.text(toText(s.warehouse), 45, 62, { maxWidth: 52 });
-
-            pdf.text('Received Date', 10, 72);
-            pdf.text(toText(s.receivedDate), 45, 72, { maxWidth: 52 });
-
-            /* ===== QR Code ===== */
-            pdf.rect(20, 80, 60, 52);
-
-            const qrDataUrl = await QRCode.toDataURL(
-                JSON.stringify({
-                    system: 'StockSync',
-                    poId: s.poId
-                }),
+            const qr = await QRCode.toDataURL(
+                JSON.stringify({ system: 'StockSync', poId: s.poId }),
                 { margin: 1 }
             );
 
-            pdf.addImage(qrDataUrl, 'PNG', 30, 86, 40, 40);
+            pdf.text('VERIFICATION QR', 30, 92);
+            pdf.roundedRect(25, 95, 50, 45, 3, 3);
+            pdf.addImage(qr, 'PNG', 32, 100, 36, 36);
 
-            pdf.setFontSize(8);
-            pdf.text('Scan to verify PO', 35, 130);
-
-            /* ===== Footer ===== */
-            pdf.line(10, 134, 90, 134);
             pdf.setFontSize(7);
             pdf.text(
-                'Generated by StockSync • Inventory & Procurement Platform',
+                'Generated by StockSync • Secure Inventory Platform',
                 12,
-                140
+                148
             );
         }
 
-        pdf.save('stocksync-enterprise-stickers-a6.pdf');
+        pdf.save('stocksync-a6-stickers.pdf');
     };
 
     /* =====================
@@ -204,23 +177,91 @@ export default function PrintStickersPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="bg-card p-6 rounded-xl shadow-lg border border-border text-center max-w-md">
-                <h1 className="text-2xl font-bold mb-4">
-                    Print Enterprise Stickers
-                </h1>
+        <div className="min-h-screen bg-background px-6 py-8">
+            {/* Top Bar */}
+            <BackButton />
 
-                <p className="text-muted-foreground mb-6">
-                    {stickers.length} sticker(s) ready
-                </p>
-
+            <div className="max-w-6xl mx-auto mb-6">
                 <button
-                    disabled={stickers.length === 0}
                     onClick={generatePDF}
-                    className="bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-medium transition-all"
+                    className="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800"
                 >
-                    Download A6 Sticker PDF
+                    Download Stickers (A6 PDF)
                 </button>
+            </div>
+
+            {/* Sticker Preview */}
+            <div className="max-w-6xl mx-auto">
+                <h2 className="text-xl font-bold mb-4">
+                    Sticker Preview ({stickers.length})
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {stickers.map((s) => (
+                        <div
+                            key={s.poId}
+                            className="
+                                rounded-xl shadow-lg p-4
+                                bg-white text-black
+                                dark:bg-zinc-900 dark:text-zinc-100
+                                border border-zinc-200 dark:border-zinc-700
+                            "
+                        >
+                            {/* Header */}
+                            <div className="bg-black text-white rounded-lg p-3 mb-3">
+                                <p className="font-bold text-sm tracking-wide">
+                                    STOCKSYNC
+                                </p>
+                                <p className="text-xs opacity-80">
+                                    INVENTORY MANAGEMENT
+                                </p>
+                            </div>
+
+                            <p className="text-sm font-semibold mb-2">
+                                GOODS RECEIVED NOTE
+                            </p>
+
+                            {/* Details */}
+                            <div className="text-xs space-y-1">
+                                <p>
+                                    <span className="font-semibold">PO ID:</span>{' '}
+                                    {s.poId}
+                                </p>
+                                <p>
+                                    <span className="font-semibold">
+                                        Supplier:
+                                    </span>{' '}
+                                    {s.supplierName}
+                                </p>
+                                <p>
+                                    <span className="font-semibold">
+                                        Warehouse:
+                                    </span>{' '}
+                                    {s.warehouse}
+                                </p>
+                                <p>
+                                    <span className="font-semibold">
+                                        Received:
+                                    </span>{' '}
+                                    {s.receivedDate}
+                                </p>
+                            </div>
+
+                            {/* QR Placeholder */}
+                            <div
+                                className="
+                                    mt-4 h-32 rounded-lg flex items-center justify-center
+                                    border border-dashed
+                                    border-zinc-300 dark:border-zinc-600
+                                    text-zinc-500 dark:text-zinc-400
+                                    text-xs
+                                "
+                            >
+                                QR CODE
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
