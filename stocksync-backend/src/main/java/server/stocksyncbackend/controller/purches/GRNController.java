@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import server.stocksyncbackend.dto.requests.CreateGRNRequest;
 import server.stocksyncbackend.dto.responses.GrnKPICardResponse;
+import server.stocksyncbackend.dto.responses.GrnResponse;
 import server.stocksyncbackend.model.GRN;
 import server.stocksyncbackend.model.PurchaseOrder;
 import server.stocksyncbackend.service.purches.CreateNewGRNService;
@@ -111,7 +112,7 @@ public class GRNController {
             description = "GRN list retrieved successfully"
     )
     @GetMapping
-    public ResponseEntity<List<GRN>> getAllGrns() {
+    public ResponseEntity<List<GrnResponse>> getAllGrns() {
         return ResponseEntity.ok(grnService.getAllGrnRecords());
     }
 }

@@ -6,6 +6,7 @@ import server.stocksyncbackend.utils.types.GrnStatus;
 import server.stocksyncbackend.utils.types.LocationLevel;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Setter
@@ -18,7 +19,7 @@ public class GRN {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDate receivedDate = LocalDate.now();
+    private LocalDateTime receivedDate = LocalDateTime.now();
 
     private String GrnNote;
 

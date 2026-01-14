@@ -2,6 +2,18 @@ export type GrnStatus = 'RECEIVED' | 'PENDING' | 'INCOMPLETE' | 'COMPLETED';
 export type LocationLevel = 'WAREHOUSE' | string;
 export type CategoryStatus = 'FINISHED_GOODS' | string;
 
+// Shape returned by GET /api/grns (list endpoint)
+export interface GrnListItemResponse {
+    id: number;
+    Poid: number;
+    receivedDate: string | null;
+    grnNote: string;
+    status: GrnStatus | string;
+    receivedBy: string | null;
+    notes: string | null;
+    inspectionLevel: LocationLevel | null;
+}
+
 export interface SupplierResponse {
     supplierId: number;
     supplierName: string;
@@ -70,5 +82,7 @@ export interface CreateGrnRequest {
 export interface GrnKpiResponse {
     totalGrns: number;
     pendingGrns: number;
-    incompleteGrns: number;
+    // Backend has been seen returning either `incompleteGrns` or `IncompleteGrns`
+    incompleteGrns?: number;
+    IncompleteGrns?: number;
 }

@@ -1,98 +1,122 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, CheckCircle, Package, Calendar, FileText, Warehouse } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DropdownSelect } from '@/components/ui/dropdown-select';
+import Loader from '@/components/ui/loader';
+import { getGrnKpi, getGrns } from '@/service/grn';
+import type { GrnKpiResponse, GrnListItemResponse, GrnStatus } from '@/utils/types/grn';
 
-interface GRN {
-    grnId: number;
-    grnNumber: string;
-    poNumber: string;
-    supplierName: string;
-    receiveDate: string;
-    warehouseName: string;
-    itemsReceived: number;
-    totalValue: number;
-    status: 'pending' | 'partial' | 'completed';
-    receivedBy: string;
-    notes: string;
-}
+type GrnStatusFilter = 'All' | GrnStatus | 'UNDER_INSPECTION' | string;
+
+type GrnCard = {
+    id: number;
+    poId: number;
+    receivedDate: string | null;
+    grnNote: string;
+    status: GrnStatus | string;
+    receivedBy: string | null;
+    notes: string | null;
+    inspectionLevel: string | null;
+};
 
 const GRNPage: React.FC = () => {
 
     const router = useRouter();
 
-    const [grns] = useState<GRN[]>([
-        {
-            grnId: 1,
-            grnNumber: 'GRN-2025-001',
-            poNumber: 'PO-2025-001',
-            supplierName: 'Tech Corp',
-            receiveDate: '2025-12-25',
-            warehouseName: 'Warehouse A',
-            itemsReceived: 100,
-            totalValue: 25000.00,
-            status: 'completed',
-            receivedBy: 'John Doe',
-            notes: 'All items received in good condition'
-        },
-        {
-            grnId: 2,
-            grnNumber: 'GRN-2025-002',
-            poNumber: 'PO-2025-002',
-            supplierName: 'Global Supplies',
-            receiveDate: '2025-12-26',
-            warehouseName: 'Warehouse B',
-            itemsReceived: 60,
-            totalValue: 12000.00,
-            status: 'partial',
-            receivedBy: 'Jane Smith',
-            notes: 'Partial shipment - awaiting remaining items'
-        },
-        {
-            grnId: 3,
-            grnNumber: 'GRN-2025-003',
-            poNumber: 'PO-2025-003',
-            supplierName: 'Office Depot Inc',
-            receiveDate: '2025-12-28',
-            warehouseName: 'Warehouse A',
-            itemsReceived: 50,
-            totalValue: 8500.00,
-            status: 'completed',
-            receivedBy: 'Mike Johnson',
-            notes: 'Quality check passed'
+    const [grns, setGrns] = useState<GrnCard[]>([]);
+    const [kpi, setKpi] = useState<GrnKpiResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function load() {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const [data, kpiData] = await Promise.all([getGrns(), getGrnKpi()]);
+
+                if (!isMounted) return;
+
+                const mapped: GrnCard[] = data.map((g) => ({
+                    id: g.id,
+                    poId: g.Poid,
+                    receivedDate: g.receivedDate === 'null' ? null : g.receivedDate,
+                    grnNote: g.grnNote,
+                    status: g.status,
+                    receivedBy: g.receivedBy,
+                    notes: g.notes,
+                    inspectionLevel: g.inspectionLevel,
+                }));
+
+                setGrns(mapped);
+                setKpi(kpiData);
+            } catch (e: unknown) {
+                if (!isMounted) return;
+                setError(e instanceof Error ? e.message : 'Failed to load GRNs');
+            } finally {
+                if (!isMounted) return;
+                setIsLoading(false);
+            }
         }
-    ]);
+
+        void load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('All');
+    const [statusFilter, setStatusFilter] = useState<GrnStatusFilter>('All');
 
-    const filteredGRNs = grns.filter(grn => {
-        const matchesSearch =
-            grn.grnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grn.poNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            grn.supplierName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'All' || grn.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredGRNs = useMemo(() => {
+        return grns.filter(grn => {
+            const matchesSearch =
+                String(grn.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                String(grn.poId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (grn.grnNote ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter === 'All' || String(grn.status) === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [grns, searchTerm, statusFilter]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'completed': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-            case 'partial': return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
-            case 'pending': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
-            default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+            case 'COMPLETED':
+            case 'RECEIVED':
+                return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+            case 'INCOMPLETE':
+                return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
+            case 'PENDING':
+            case 'UNDER_INSPECTION':
+                return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+            default:
+                return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
         }
     };
 
-    const stats = {
-        totalGRNs: grns.length,
-        completed: grns.filter(g => g.status === 'completed').length,
-        partial: grns.filter(g => g.status === 'partial').length,
-        totalValue: grns.reduce((sum, g) => sum + g.totalValue, 0)
+    const stats = useMemo(() => {
+        const incomplete = (kpi?.incompleteGrns ?? kpi?.IncompleteGrns ?? 0);
+        return {
+            totalGRNs: kpi?.totalGrns ?? 0,
+            pending: kpi?.pendingGrns ?? 0,
+            incomplete,
+        };
+    }, [kpi]);
+
+    const formatDate = (value: string | null) => {
+        if (!value) return '—';
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString();
     };
+
+    if (isLoading) {
+        return <Loader label="Loading GRNs…" />;
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -111,7 +135,7 @@ const GRNPage: React.FC = () => {
                     <p className="text-muted-foreground ml-16">Track and manage goods received from suppliers</p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -126,8 +150,8 @@ const GRNPage: React.FC = () => {
                         transition={{ delay: 0.1 }}
                         className="bg-card rounded-xl p-4 border border-border shadow-sm"
                     >
-                        <p className="text-muted-foreground text-sm mb-1">Completed</p>
-                        <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.completed}</p>
+                        <p className="text-muted-foreground text-sm mb-1">Pending</p>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.pending}</p>
                     </motion.div>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -135,19 +159,20 @@ const GRNPage: React.FC = () => {
                         transition={{ delay: 0.2 }}
                         className="bg-card rounded-xl p-4 border border-border shadow-sm"
                     >
-                        <p className="text-muted-foreground text-sm mb-1">Partial</p>
-                        <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.partial}</p>
-                    </motion.div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="bg-card rounded-xl p-4 border border-border shadow-sm"
-                    >
-                        <p className="text-muted-foreground text-sm mb-1">Total Value</p>
-                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">${stats.totalValue.toFixed(2)}</p>
+                        <p className="text-muted-foreground text-sm mb-1">Incomplete</p>
+                        <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.incomplete}</p>
                     </motion.div>
                 </div>
+
+                {error ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200"
+                    >
+                        {error}
+                    </motion.div>
+                ) : null}
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -176,9 +201,11 @@ const GRNPage: React.FC = () => {
                                 className="w-[180px] justify-between px-4 py-3"
                                 options={[
                                     { value: 'All', label: 'All Status' },
-                                    { value: 'pending', label: 'Pending' },
-                                    { value: 'partial', label: 'Partial' },
-                                    { value: 'completed', label: 'Completed' }
+                                    { value: 'PENDING', label: 'Pending' },
+                                    { value: 'UNDER_INSPECTION', label: 'Under Inspection' },
+                                    { value: 'INCOMPLETE', label: 'Incomplete' },
+                                    { value: 'RECEIVED', label: 'Received' },
+                                    { value: 'COMPLETED', label: 'Completed' }
                                 ]}
                             />
 
@@ -199,7 +226,7 @@ const GRNPage: React.FC = () => {
                     <AnimatePresence>
                         {filteredGRNs.map((grn, index) => (
                             <motion.div
-                                key={grn.grnId}
+                                key={grn.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
@@ -209,15 +236,15 @@ const GRNPage: React.FC = () => {
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
                                         <h3 className="text-lg font-bold text-foreground mb-1">
-                                            {grn.grnNumber}
+                                            GRN-{String(grn.id).padStart(4, '0')}
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
-                                            PO: {grn.poNumber}
+                                            PO: {grn.poId}
                                         </p>
                                     </div>
                                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(grn.status)}`}>
                                         <CheckCircle className="w-4 h-4" />
-                                        {grn.status.charAt(0).toUpperCase() + grn.status.slice(1)}
+                                        {String(grn.status)}
                                     </div>
                                 </div>
 
@@ -225,26 +252,25 @@ const GRNPage: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <Package className="w-5 h-5 text-muted-foreground" />
                                         <div>
-                                            <p className="text-sm font-medium text-foreground">{grn.supplierName}</p>
-                                            <p className="text-xs text-muted-foreground">{grn.itemsReceived} items received</p>
+                                            <p className="text-sm font-medium text-foreground">GRN Note</p>
+                                            <p className="text-xs text-muted-foreground">{grn.grnNote || '—'}</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <Warehouse className="w-5 h-5 text-muted-foreground" />
-                                        <p className="text-sm text-muted-foreground">{grn.warehouseName}</p>
+                                        <p className="text-sm text-muted-foreground">{grn.inspectionLevel || '—'}</p>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         <Calendar className="w-5 h-5 text-muted-foreground" />
                                         <p className="text-sm text-muted-foreground">
-                                            {new Date(grn.receiveDate).toLocaleDateString()}
+                                            {formatDate(grn.receivedDate)}
                                         </p>
                                     </div>
-
                                     <div className="flex items-center justify-between pt-3 border-t border-border">
-                                        <span className="text-sm text-muted-foreground">Total Value:</span>
-                                        <span className="text-lg font-bold text-purple-600 dark:text-purple-400">${grn.totalValue.toFixed(2)}</span>
+                                        <span className="text-sm text-muted-foreground">Received By:</span>
+                                        <span className="text-sm font-medium text-foreground">{grn.receivedBy || '—'}</span>
                                     </div>
                                 </div>
 
@@ -260,6 +286,10 @@ const GRNPage: React.FC = () => {
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        // No GRN details route exists yet; keeping the button functional for future.
+                                        router.push(`/purchases/grn/${grn.id}`);
+                                    }}
                                     className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-all"
                                 >
                                     View Details
