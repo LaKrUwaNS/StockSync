@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { DropdownSelect } from '@/components/ui/dropdown-select';
 import Loader from '@/components/ui/loader';
 import { getGrnKpi, getGrns } from '@/service/grn';
-import type { GrnKpiResponse, GrnListItemResponse, GrnStatus } from '@/utils/types/grn';
+import type { GrnKpiResponse, GrnStatus } from '@/utils/types/grn';
 
 type GrnStatusFilter = 'All' | GrnStatus | 'UNDER_INSPECTION' | string;
 
