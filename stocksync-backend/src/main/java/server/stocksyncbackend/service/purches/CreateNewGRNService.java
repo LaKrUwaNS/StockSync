@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import server.stocksyncbackend.dto.requests.CreateGRNRequest;
 import server.stocksyncbackend.dto.responses.GrnKPICardResponse;
+import server.stocksyncbackend.dto.responses.GrnResponse;
 import server.stocksyncbackend.model.GRN;
 import server.stocksyncbackend.model.Product;
 import server.stocksyncbackend.model.PurchaseOrder;
@@ -51,6 +52,7 @@ public class CreateNewGRNService {
             Product product = Product.builder()
                     .productName(order.getItemName())
                     .sku("SKU-" + System.currentTimeMillis())
+
                     .category(request.getCategoryStatus())
                     .unitPrice(order.getTotalAmount())
                     .reorderLevel(request.getLocationLevel())
@@ -93,7 +95,16 @@ public class CreateNewGRNService {
     // ==========================
     // Get all GRNs
     // ==========================
-    public List<GRN> getAllGrnRecords() {
-        return grnRepository.findAll();
+    public List<GrnResponse> getAllGrnRecords() {
+        return grnRepository.findAll().stream().map(grn -> GrnResponse.builder()
+                .id(grn.getId())
+                .receivedDate(String.valueOf(grn.getReceivedDate()))
+                .grnNote(grn.getGrnNote())
+                .status(grn.getStatus())
+                .inspectionLevel(grn.getInspectionLevel())
+                .Poid(
+                        grn.getPurchaseOrder().getPoId()
+                )
+                .build()).toList();
     }
 }

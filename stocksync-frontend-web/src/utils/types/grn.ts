@@ -1,6 +1,18 @@
-export type GrnStatus = 'RECEIVED' | 'PENDING' | 'INCOMPLETE' | 'COMPLETED';
+export type GrnStatus = 'RECEIVED' | 'UNDER_INSPECTION' | 'COMPLETED' | 'INCOMPLETE' | 'PENDING';
 export type LocationLevel = 'WAREHOUSE' | string;
-export type CategoryStatus = 'FINISHED_GOODS' | string;
+export type CategoryStatus = 'FINISHED_GOODS' | 'RAW_MATERIALS' | string;
+
+// Shape returned by GET /api/grns (list endpoint)
+export interface GrnListItemResponse {
+    id: number;
+    Poid: number;
+    receivedDate: string | null;
+    grnNote: string;
+    status: GrnStatus | string;
+    receivedBy: string | null;
+    notes: string | null;
+    inspectionLevel: LocationLevel | null;
+}
 
 export interface SupplierResponse {
     supplierId: number;
@@ -47,7 +59,9 @@ export interface PurchaseOrderResponse {
     supplier: SupplierResponse | null;
     createdBy: PurchaseOrderCreatedByResponse | null;
     warehouse: WarehouseResponse | null;
-    itemName: string;
+    // Backend sometimes returns `ItemName` instead of `itemName`
+    itemName?: string | null;
+    ItemName?: string | null;
 }
 
 export interface GrnResponse {
@@ -62,13 +76,16 @@ export interface GrnResponse {
 export interface CreateGrnRequest {
     poId: number;
     grnNote: string;
-    locationLevel: LocationLevel;
     status: GrnStatus;
-    categoryStatus: CategoryStatus;
+    // New API format only requires these 3 fields. Keep the below optional for backward compatibility.
+    locationLevel?: LocationLevel;
+    categoryStatus?: CategoryStatus;
 }
 
 export interface GrnKpiResponse {
     totalGrns: number;
     pendingGrns: number;
-    incompleteGrns: number;
+    // Backend has been seen returning either `incompleteGrns` or `IncompleteGrns`
+    incompleteGrns?: number;
+    IncompleteGrns?: number;
 }

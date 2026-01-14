@@ -1,8 +1,13 @@
 import api from '@/lib/axios';
-import type { CreateGrnRequest, GrnKpiResponse, GrnResponse, PurchaseOrderResponse } from '@/utils/types/grn';
+import type {
+	CreateGrnRequest,
+	GrnKpiResponse,
+	GrnListItemResponse,
+	PurchaseOrderResponse,
+} from '@/utils/types/grn';
 
-export async function getGrns(): Promise<GrnResponse[]> {
-	const res = await api.get<GrnResponse[]>('/api/grns');
+export async function getGrns(): Promise<GrnListItemResponse[]> {
+	const res = await api.get<GrnListItemResponse[]>('/api/grns');
 	return res.data;
 }
 
