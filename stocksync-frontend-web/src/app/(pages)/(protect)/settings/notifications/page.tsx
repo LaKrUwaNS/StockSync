@@ -63,7 +63,9 @@ const NotificationsSettingsPage: React.FC = () => {
                             <p className="text-foreground font-medium mb-2">Sample Email Notification</p>
                             <div className="space-y-2 text-sm text-muted-foreground">
                                 <p>Subject: Low Stock Alert - Warehouse A</p>
-                                <p>Body: The item "SSD 1TB" has dropped below the reorder threshold.</p>
+                                <p>
+                                    Body: The item &quot;SSD 1TB&quot; has dropped below the reorder threshold.
+                                </p>
                                 <p>Action: Review and create purchase order.</p>
                             </div>
                         </div>

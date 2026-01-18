@@ -400,7 +400,12 @@ const WarehousesPage: React.FC = () => {
                                         <label className="text-sm text-muted-foreground mb-2 block">Status *</label>
                                         <select
                                             value={formData.status}
-                                            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											status: e.target.value as "active" | "inactive" | "maintenance",
+										})
+									}
                                             className="w-full bg-muted border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                                         >
                                             <option value="active">Active</option>
