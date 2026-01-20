@@ -10,4 +10,6 @@ import lombok.*;
 public class SupplierKPIcards {
     private Integer TotalSuppliers;
     private Double TotalSpent;
+    private Integer TotalStock;
+    private Integer OnTimeDeliveryRate;
 }

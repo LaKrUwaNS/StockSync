@@ -2,6 +2,7 @@ package server.stocksyncbackend.service.purches;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import server.stocksyncbackend.dto.requests.CreateSupplierRequest;
 import server.stocksyncbackend.dto.requests.SupplierEditRequest;
 import server.stocksyncbackend.dto.responses.SupplierKPIcards;
 import server.stocksyncbackend.dto.responses.SupplierResponse;
@@ -9,6 +10,7 @@ import server.stocksyncbackend.model.PurchaseOrder;
 import server.stocksyncbackend.model.Supplier;
 import server.stocksyncbackend.repository.PurchaseOrderRepository;
 import server.stocksyncbackend.repository.SupplierRepository;
+import server.stocksyncbackend.utils.types.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
@@ -95,6 +97,17 @@ public class SupplierService {
         );
     }
 
+    // Create new Supplier
+    public void createNewSupplier(CreateSupplierRequest request) {
+        Supplier supplier = Supplier.builder()
+                .supplierName(request.getSupplierName())
+                .contactInfo(request.getContactInfo())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .build();
+        supplierRepository.save(supplier);
+    }
+
 
     // delete supplier by id
     public void deleteSupplier(Long supplierId) {
@@ -102,17 +115,32 @@ public class SupplierService {
     }
 
     // KPI data
-    public SupplierKPIcards getCardData(){
-        return SupplierKPIcards
-                .builder()
+    public SupplierKPIcards getCardData() {
+
+        double totalSpent = 0;
+
+        if (supplierRepository.count() > 0) {
+            totalSpent = purchaseOrderRepository.findAll().stream()
+                    .filter(po -> po.getSupplier() != null)
+                    .map(PurchaseOrder::getTotalAmount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .doubleValue();
+        }
+
+        long totalOrders = purchaseOrderRepository.count();
+        long receivedOrders = purchaseOrderRepository.countByStatus(OrderStatus.RECEIVED);
+
+        double onTimeDeliveryRate = totalOrders == 0
+                ? 0
+                : (receivedOrders * 100.0) / totalOrders;
+
+        return SupplierKPIcards.builder()
                 .TotalSuppliers((int) supplierRepository.count())
-                .TotalSpent(
-                        purchaseOrderRepository.findAll().stream()
-                                .map(PurchaseOrder::getTotalAmount)
-                                .filter(Objects::nonNull)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                                .doubleValue()
-                )
+                .TotalSpent(totalSpent)
+                .TotalStock((int) totalOrders)
+                .OnTimeDeliveryRate((int) onTimeDeliveryRate)
                 .build();
     }
+
 }
